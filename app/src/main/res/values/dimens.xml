@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- normal text buttons -->
+    <dimen name="btn_width">120dp</dimen>
+    <dimen name="btn_height">48dp</dimen>
+
+    <!-- square icon buttons -->
+    <dimen name="icon_btn_size">48dp</dimen>
+    <dimen name="icon_size">24dp</dimen>
+</resources>

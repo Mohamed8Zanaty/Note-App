@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Note App</string>
+    <string name="search_button">This Button is For Search</string>
 </resources>
