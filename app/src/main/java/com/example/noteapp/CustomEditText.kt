@@ -4,21 +4,28 @@ import android.content.Context
 import android.util.AttributeSet
 import androidx.appcompat.widget.AppCompatEditText
 
-class CustomEditText : AppCompatEditText {
-    constructor(context: Context) : super(context)
-    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
-    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
+class CustomEditText  @JvmOverloads constructor(
+    context: Context,
+    attrs: AttributeSet? = null,
+    defStyleAttr: Int = androidx.appcompat.R.attr.editTextStyle
+) : AppCompatEditText(context, attrs, defStyleAttr) {
 
-    var onSelectionChangedListener: ((start: Int, end: Int) -> Unit)? = null
+    private var onSelectionChangedListener: ((start: Int, end: Int) -> Unit)? = null
 
     override fun onSelectionChanged(selStart: Int, selEnd: Int) {
         super.onSelectionChanged(selStart, selEnd)
         onSelectionChangedListener?.invoke(selStart, selEnd)
     }
-
+    fun setOnSelectionChangedListener(listener: ((start: Int, end: Int) -> Unit)?) {
+        onSelectionChangedListener = listener
+    }
 
     override fun performClick(): Boolean {
 
         return super.performClick()
+    }
+    override fun onDetachedFromWindow() {
+        onSelectionChangedListener = null
+        super.onDetachedFromWindow()
     }
 }

@@ -5,21 +5,30 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.navigation.NavController
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 
 class NoteAdapter(
-    private val notes : MutableList<Note>,
-    private val navController: NavController,
+    private val onItemClick: (Note) -> Unit,
     private val onDelete: (Note, Int) -> Unit
-) :RecyclerView.Adapter<NoteAdapter.NoteViewHolder>() {
-    private val selectedPositions = mutableSetOf<Int>()
-    inner class NoteViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView){
+) : ListAdapter<Note, NoteAdapter.NoteViewHolder>(DIFF) {
+
+    private val selectedIds = mutableSetOf<Long>()
+
+    companion object {
+        private val DIFF = object : DiffUtil.ItemCallback<Note>() {
+            override fun areItemsTheSame(oldItem: Note, newItem: Note): Boolean = oldItem.id == newItem.id
+            override fun areContentsTheSame(oldItem: Note, newItem: Note): Boolean =
+                oldItem.title == newItem.title && oldItem.content == newItem.content
+        }
+    }
+
+    inner class NoteViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val root: View = itemView.findViewById(R.id.root)
         val tvTitle: TextView = itemView.findViewById(R.id.tvTitle)
         val tvBody: TextView = itemView.findViewById(R.id.tvBody)
         val ivDelete: ImageView = itemView.findViewById(R.id.ivDelete)
-
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): NoteViewHolder {
@@ -27,97 +36,89 @@ class NoteAdapter(
         return NoteViewHolder(v)
     }
 
-    override fun getItemCount(): Int = notes.size
-
     override fun onBindViewHolder(holder: NoteViewHolder, position: Int) {
-        val note = notes[position]
+        val note = getItem(position)
+
         holder.tvTitle.text = note.title
         holder.tvBody.text = note.content
-        val selected = selectedPositions.contains(position)
-        holder.itemView.isActivated = selected
-        if(selected) {
-            holder.tvTitle.visibility = View.GONE
-            holder.tvBody.visibility = View.GONE
-            holder.ivDelete.visibility = View.VISIBLE
-        }
-        else {
-            holder.tvTitle.visibility = View.VISIBLE
-            holder.tvBody.visibility = View.VISIBLE
-            holder.ivDelete.visibility = View.GONE
-        }
 
+        val selected = selectedIds.contains(note.id)
+        holder.itemView.isActivated = selected
+
+        // show/hide views based on selection
+        holder.tvTitle.visibility = if (selected) View.GONE else View.VISIBLE
+        holder.tvBody.visibility = if (selected) View.GONE else View.VISIBLE
+        holder.ivDelete.visibility = if (selected) View.VISIBLE else View.GONE
+
+        // Long-click toggles selection
         holder.itemView.setOnLongClickListener {
-            toggleSelection(position)
+            val pos = holder.bindingAdapterPosition
+            if (pos != RecyclerView.NO_POSITION) toggleSelectionById(note.id)
             true
         }
+
+        // Clicks either toggle selection when in selection mode, or open item
         holder.itemView.setOnClickListener {
-            if (selectedPositions.isNotEmpty()) {
-                toggleSelection(position)
+            val pos = holder.bindingAdapterPosition
+            if (pos == RecyclerView.NO_POSITION) return@setOnClickListener
+            if (selectedIds.isNotEmpty()) {
+                toggleSelectionById(note.id)
             } else {
-                val action = HomeFragmentDirections.actionHomeToReadNote(
-                    noteId = note.id.toString(),
-                    noteTitle = note.title,
-                    noteText = note.content
-                )
-                navController.navigate(action)
+                onItemClick(note)
             }
         }
+
         holder.ivDelete.setOnClickListener {
             val pos = holder.bindingAdapterPosition
             if (pos != RecyclerView.NO_POSITION) {
                 onDelete(note, pos)
             }
         }
+    }
 
-    }
-    private fun toggleSelection(position: Int) {
-        if (selectedPositions.contains(position)) {
-            selectedPositions.remove(position)
-            notifyItemChanged(position)
+    private fun toggleSelectionById(noteId: Long) {
+        if (selectedIds.contains(noteId)) {
+            selectedIds.remove(noteId)
         } else {
-            selectedPositions.add(position)
-            notifyItemChanged(position)
+            selectedIds.add(noteId)
         }
+        // find changed index(es) and notify
+        // simpler: just refresh whole list for selection changes:
+        notifyItemRangeChanged(0, itemCount) // selection visual changes only
     }
-    private fun clearSelectionAndShift(removedIndex: Int) {
-        val copy = selectedPositions.toList()
-        selectedPositions.clear()
-        for (pos in copy) {
-            if (pos == removedIndex) continue
-            val newPos = if (pos > removedIndex) pos - 1 else pos
-            selectedPositions.add(newPos)
-        }
+
+    fun clearSelection() {
+        if (selectedIds.isEmpty()) return
+        selectedIds.clear()
+        notifyItemRangeChanged(0, itemCount)
     }
+
+    // remove by position: submit a new list and keep selection safe (ids remain meaningful)
     fun removeAt(position: Int) {
-        if (position in 0 until notes.size) {
-            notes.removeAt(position)
-            clearSelectionAndShift(position)
-            notifyItemRemoved(position)
-        }
+        if (position !in 0 until currentList.size) return
+        val newList = currentList.toMutableList()
+        val removed = newList.removeAt(position)
+        selectedIds.remove(removed.id)
+        submitList(newList)
     }
 
     fun updateList(newItems: List<Note>) {
-        notes.clear()
-        notes.addAll(newItems)
-        selectedPositions.clear()
-        notifyDataSetChanged()
+        // clear selection when a full new list arrives (optional)
+        selectedIds.clear()
+        submitList(newItems.toList())
     }
 
-    /**
-     * Replace existing note with same id, or insert at top if not found.
-     * Returns the position changed/inserted.
-     */
     fun updateNoteById(note: Note): Int {
-        val idx = notes.indexOfFirst { it.id == note.id }
-        return if (idx >= 0) {
-            notes[idx] = note
-            notifyItemChanged(idx)
+        val newList = currentList.toMutableList()
+        val idx = newList.indexOfFirst { it.id == note.id }
+        val pos = if (idx >= 0) {
+            newList[idx] = note
             idx
         } else {
-            notes.add(0, note)
-            notifyItemInserted(0)
+            newList.add(0, note)
             0
         }
+        submitList(newList)
+        return pos
     }
-
 }

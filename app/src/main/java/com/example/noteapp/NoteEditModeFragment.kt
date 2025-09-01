@@ -2,17 +2,14 @@ package com.example.noteapp
 
 import android.content.Context
 import android.graphics.Color
-import android.graphics.Rect
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.TypedValue
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
-import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import android.view.ViewTreeObserver
 import android.widget.EditText
 import android.widget.Toast
 import androidx.core.content.ContextCompat
@@ -20,6 +17,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewModelScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.example.noteapp.databinding.FragmentNoteEditModeBinding
@@ -36,11 +34,12 @@ class NoteEditModeFragment : Fragment() {
     private lateinit var scrollView: NestedScrollView
     private lateinit var noteText: CustomEditText
     private lateinit var title: EditText
-    private var rootLayoutListener: ViewTreeObserver.OnGlobalLayoutListener? = null
+
     private var keyboardHeight = 0
     private var edited = false
+
     private val args: NoteEditModeFragmentArgs by navArgs()
-    private val noteId: Long by lazy { args.noteId.toLongOrNull() ?: 0L } // safe parsing
+    private val noteId: Long by lazy { args.noteId.toLongOrNull() ?: -1L }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -57,13 +56,13 @@ class NoteEditModeFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        db = NoteDbHelper(requireContext())
-        // Set up window insets listener to detect keyboard
-        ViewCompat.setOnApplyWindowInsetsListener(view) { v, insets ->
+
+        db = NoteDbHelper.getInstance(requireContext())
+
+        ViewCompat.setOnApplyWindowInsetsListener(view) { _, insets ->
             val imeInsets = insets.getInsets(WindowInsetsCompat.Type.ime())
             keyboardHeight = imeInsets.bottom
 
-            // Ensure text color is maintained
             noteText.setTextColor(Color.WHITE)
             noteText.setHintTextColor(ContextCompat.getColor(requireContext(), R.color.hint))
 
@@ -75,13 +74,11 @@ class NoteEditModeFragment : Fragment() {
             )
             insets
         }
-        noteText.setOnFocusChangeListener { _, _ ->
-            noteText.setTextColor(Color.WHITE)
-        }
+
+        noteText.setOnFocusChangeListener { _, _ -> noteText.setTextColor(Color.WHITE) }
         ViewCompat.requestApplyInsets(view)
+
         saveButtonSetup()
-        // ... (cursor scrolling code remains unchanged) ...
-        // I'll omit unchanged parts here for brevity — keep your existing caret-scrolling code
     }
 
     private fun bindViews() {
@@ -92,13 +89,14 @@ class NoteEditModeFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        // remove listener to avoid leaks
-        val rootView = requireActivity().window.decorView.rootView
-        rootLayoutListener?.let {
-            rootView.viewTreeObserver.removeOnGlobalLayoutListener(it)
-        }
-        rootLayoutListener = null
         _binding = null
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        try {
+            db.close()
+        } catch (ignored: Exception) { }
     }
 
     private fun dpToPx(dp: Int, ctx: Context): Int {
@@ -107,15 +105,16 @@ class NoteEditModeFragment : Fragment() {
         ).roundToInt()
     }
 
-    private fun bindData(note : Note) {
+    private fun bindData(note: Note) {
         title.setText(note.title)
         noteText.setText(note.content)
     }
-    private fun receivedData() : Note {
-        // safe noteId usage (we parsed above)
+
+    private fun receivedData(): Note {
         return Note(noteId, args.noteTitle, args.noteText)
     }
-    private fun navigateToReadMode(note:Note) {
+
+    private fun navigateToReadMode(note: Note) {
         val action = NoteEditModeFragmentDirections
             .actionNoteEditModeToNoteReadMode(
                 note.title,
@@ -123,17 +122,19 @@ class NoteEditModeFragment : Fragment() {
             )
         findNavController().navigate(action)
     }
+
     private fun readBtnSetup() {
         setEdited()
-        // TO DO (MAKE DIALOG FOR KEEP, DISCARD)
-        edited = false
         binding.btnRead.setOnClickListener {
-            navigateToReadMode(Note(
-                title = title.text.toString(),
-                content = noteText.text.toString()
-            ))
+            navigateToReadMode(
+                Note(
+                    title = title.text.toString(),
+                    content = noteText.text.toString()
+                )
+            )
         }
     }
+
     private fun setEdited() {
         title.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
@@ -156,22 +157,21 @@ class NoteEditModeFragment : Fragment() {
                 return@setDebouncedOnClickListener
             }
 
-            lifecycleScope.launch {
+            viewLifecycleOwner.lifecycleScope.launch {
                 try {
-                    val (status, returnedId) = withContext(Dispatchers.IO) {
-                        if (noteId > 0L) {
-                            // Make sure the note actually exists before updating
-                            val existing = db.getNote(noteId)
-                            if (existing == null) {
-                                "not_found" to -1L
-                            } else {
-                                val updatedRows = db.updateNote(noteId, sTitle, sContent)
-                                if (updatedRows > 0) "updated" to noteId else "update_failed" to -1L
-                            }
+                    val (status, returnedId) = if (noteId != -1L) {
+
+                        val existing = db.getNote(noteId)
+                        if (existing == null) {
+                            "not_found" to -1L
                         } else {
-                            val newId = db.addNote(sTitle, sContent)
-                            if (newId != -1L) "added" to newId else "add_failed" to -1L
+                            val updatedRows = db.updateNote(noteId, sTitle, sContent)
+                            if (updatedRows > 0) "updated" to noteId else "update_failed" to -1L
                         }
+                    } else {
+                        // add flow
+                        val newId = db.addNote(sTitle, sContent)
+                        if (newId != -1L) "added" to newId else "add_failed" to -1L
                     }
 
                     when (status) {
@@ -180,7 +180,6 @@ class NoteEditModeFragment : Fragment() {
                             findNavController().previousBackStackEntry
                                 ?.savedStateHandle
                                 ?.set("note_added_id", returnedId)
-                            // safer: pop back to previous (Home)
                             findNavController().popBackStack()
                         }
                         "updated" -> {
@@ -200,12 +199,12 @@ class NoteEditModeFragment : Fragment() {
             }
         }
     }
+
     private fun backButtonSetup() {
         binding.btnBack.setOnClickListener {
             val currentTitle = title.text.toString()
             val currentContent = noteText.text.toString()
-            // use the safe parsed noteId (0L means new note)
-            val idForDialog = if (noteId > 0L) noteId else 0L
+            val idForDialog = if (noteId != -1L) noteId else -1L
             val dialog = DiscardKeepDialogFragment.newInstance(
                 Note(
                     id = idForDialog,
@@ -216,7 +215,8 @@ class NoteEditModeFragment : Fragment() {
             dialog.show(parentFragmentManager, "discardFragment")
         }
     }
-    fun View.setDebouncedOnClickListener(interval: Long = 600L, action: (View) -> Unit) {
+
+    private fun View.setDebouncedOnClickListener(interval: Long = 600L, action: (View) -> Unit) {
         var lastClick = 0L
         setOnClickListener {
             val now = System.currentTimeMillis()

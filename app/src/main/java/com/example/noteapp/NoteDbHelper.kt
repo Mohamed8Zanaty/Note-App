@@ -4,123 +4,106 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
-import android.icu.text.CaseMap.Title
-import androidx.annotation.ContentView
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
-class NoteDbHelper(context : Context) :
-SQLiteOpenHelper(context, DB_NAME, null, DB_VERSION) {
-    override fun onCreate(db: SQLiteDatabase?) {
-        db?.execSQL(
+
+class NoteDbHelper private constructor(context: Context) :
+    SQLiteOpenHelper(context, DB_NAME, null, DB_VERSION) {
+
+    override fun onCreate(db: SQLiteDatabase) {
+        db.execSQL(
             """
             CREATE TABLE $TABLE_NOTES (
                 $COL_ID INTEGER PRIMARY KEY AUTOINCREMENT,
                 $COL_TITLE TEXT,
                 $COL_CONTENT TEXT NOT NULL,
-                $COL_CREATED_AT INTEGER NOT NULL
+                $COL_CREATED_AT INTEGER NOT NULL DEFAULT 0
             )
             """.trimIndent()
         )
     }
 
-    override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
-        if (db == null) return
-
-
+    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+        // simple incremental migrations; do NOT drop user data
         if (oldVersion < 2) {
-
-            db.execSQL(
-                "ALTER TABLE $TABLE_NOTES ADD COLUMN $COL_CREATED_AT INTEGER NOT NULL DEFAULT 0"
-            )
-
+            db.execSQL("ALTER TABLE $TABLE_NOTES ADD COLUMN $COL_CREATED_AT INTEGER NOT NULL DEFAULT 0")
         }
-
+        // future migrations: if (oldVersion < 3) { ... }
     }
 
-    fun addNote(title: String?, content: String): Long {
-        val values = values(title, content, System.currentTimeMillis())
-        val db = writableDatabase
-        val result = db.insert(TABLE_NOTES, null, values)
-        // Don't close the database here
-        return result
+    suspend fun addNote(title: String?, content: String): Long = withContext(Dispatchers.IO) {
+        val createdAt = System.currentTimeMillis()
+        val values = ContentValues().apply {
+            put(COL_TITLE, title)
+            put(COL_CONTENT, content)
+            put(COL_CREATED_AT, createdAt)
+        }
+        writableDatabase.insert(TABLE_NOTES, null, values)
     }
 
-    fun updateNote(id: Long, title: String?, content: String): Int {
-        val db = writableDatabase
+    suspend fun updateNote(id: Long, title: String?, content: String): Int = withContext(Dispatchers.IO) {
         val values = ContentValues().apply {
             put(COL_TITLE, title)
             put(COL_CONTENT, content)
         }
-        val result = db.update(
-            TABLE_NOTES,
-            values,
-            "$COL_ID = ?",
-            arrayOf(id.toString())
-        )
-        // Don't close the database here
-        return result
+        writableDatabase.update(TABLE_NOTES, values, "$COL_ID = ?", arrayOf(id.toString()))
     }
 
-    fun deleteNote(id: Long): Int {
-        val db = writableDatabase
-        val result = db.delete(TABLE_NOTES, "$COL_ID = ?", arrayOf(id.toString()))
-        // Don't close the database here
-        return result
+    suspend fun deleteNote(id: Long): Int = withContext(Dispatchers.IO) {
+        writableDatabase.delete(TABLE_NOTES, "$COL_ID = ?", arrayOf(id.toString()))
     }
 
-    fun getAllNotes(): List<Note> {
-        val notes = mutableListOf<Note>()
-        val db = readableDatabase
-        val cursor = db.query(
+    suspend fun getAllNotes(): List<Note> = withContext(Dispatchers.IO) {
+        val list = mutableListOf<Note>()
+        val cursor = readableDatabase.query(
             TABLE_NOTES,
             arrayOf(COL_ID, COL_TITLE, COL_CONTENT, COL_CREATED_AT),
             null, null, null, null,
             "$COL_CREATED_AT DESC"
         )
-        cursor.use {
-            while (it.moveToNext()) {
-                val id = it.getLong(it.getColumnIndexOrThrow(COL_ID))
-                val title = it.getString(it.getColumnIndexOrThrow(COL_TITLE))
-                val content = it.getString(it.getColumnIndexOrThrow(COL_CONTENT))
-                val createdAt = it.getLong(it.getColumnIndexOrThrow(COL_CREATED_AT))
-                notes += Note(id = id, title = title, content = content, createdAt = createdAt)
+
+        cursor.use { c ->
+            if (c.moveToFirst()) {
+                do {
+                    val nid = c.getLong(c.getColumnIndexOrThrow(COL_ID))
+                    val title = c.getString(c.getColumnIndexOrThrow(COL_TITLE)) ?: ""
+                    val content = c.getString(c.getColumnIndexOrThrow(COL_CONTENT)) ?: ""
+                    val createdAt = c.getLong(c.getColumnIndexOrThrow(COL_CREATED_AT))
+                    list.add(Note(nid, title, content, createdAt))
+                } while (c.moveToNext())
             }
         }
-        // Don't close the database here
-        return notes
+        list
     }
 
-    fun getNote(id: Long): Note? {
-        val db = readableDatabase
-        val c = db.query(
+    suspend fun getNote(id: Long): Note? = withContext(Dispatchers.IO) {
+        val cursor = readableDatabase.query(
             TABLE_NOTES,
             arrayOf(COL_ID, COL_TITLE, COL_CONTENT, COL_CREATED_AT),
             "$COL_ID = ?",
             arrayOf(id.toString()),
-            null, null, null, null
+            null, null, null
         )
-        c.use {
-            return if (it.moveToFirst()) {
-                val nid = it.getLong(it.getColumnIndexOrThrow(COL_ID))
-                val title = it.getString(it.getColumnIndexOrThrow(COL_TITLE))
-                val content = it.getString(it.getColumnIndexOrThrow(COL_CONTENT))
-                val createdAt = it.getLong(it.getColumnIndexOrThrow(COL_CREATED_AT))
-                Note(id = nid, title = title, content = content, createdAt = createdAt)
-            } else {
-                null
+
+        cursor.use { c ->
+            if (c.moveToFirst()) {
+                val nid = c.getLong(c.getColumnIndexOrThrow(COL_ID))
+                val title = c.getString(c.getColumnIndexOrThrow(COL_TITLE)) ?: ""
+                val content = c.getString(c.getColumnIndexOrThrow(COL_CONTENT)) ?: ""
+                val createdAt = c.getLong(c.getColumnIndexOrThrow(COL_CREATED_AT))
+                return@withContext Note(nid, title, content, createdAt)
             }
+            null
         }
     }
 
-    private fun values(title: String?, content: String, createdAt: Long?): ContentValues {
-        return ContentValues().apply {
-            put(COL_TITLE, title)
-            put(COL_CONTENT, content)
-            createdAt?.let { put(COL_CREATED_AT, it) }
-        }
+    fun closeHelper() {
+        try {
+            close()
+        } catch (e: Exception) { /* ignore */ }
     }
-    fun closeDb() {
-        close()
-    }
+
     companion object {
         @Volatile
         private var INSTANCE: NoteDbHelper? = null
@@ -130,9 +113,9 @@ SQLiteOpenHelper(context, DB_NAME, null, DB_VERSION) {
                 INSTANCE ?: NoteDbHelper(context.applicationContext).also { INSTANCE = it }
             }
         }
-        const val DB_NAME = "notes.db"
-        // Bump DB version to 2 because we added createdAt in schema.
-        const val DB_VERSION = 2
+
+        private const val DB_NAME = "notes.db"
+        private const val DB_VERSION = 2
 
         const val TABLE_NOTES = "notes"
         const val COL_ID = "_id"

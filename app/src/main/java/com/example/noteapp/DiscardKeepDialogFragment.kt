@@ -49,7 +49,7 @@ class DiscardKeepDialogFragment: DialogFragment() {
                 it.getString("note_content") ?: ""
             )
         }
-        db = NoteDbHelper(requireContext())
+        db = NoteDbHelper.getInstance(requireContext())
         isCancelable = true
         setStyle(STYLE_NORMAL, R.style.FullScreenDialog)
     }
@@ -98,7 +98,8 @@ class DiscardKeepDialogFragment: DialogFragment() {
     }
     private fun discardButtonSetup() {
         discard.setOnClickListener {
-            requireParentFragment().findNavController().navigate(R.id.action_note_edit_mode_to_home)
+            val navController = parentFragment?.findNavController() ?: findNavController()
+            navController.navigate(R.id.action_note_edit_mode_to_home)
             dismiss()
         }
     }
@@ -106,18 +107,32 @@ class DiscardKeepDialogFragment: DialogFragment() {
         keep.setOnClickListener {
 
             lifecycleScope.launch {
-                if (note.id != -1L) {
-                    // Update existing note
-                    db.updateNote(note.id, note.title, note.content)
-                } else {
-                    // Add new note
-                    db.addNote(note.title, note.content)
+                withContext(Dispatchers.IO) {
+
+                    if (note.id != -1L) {
+                        // Update existing note
+                        db.updateNote(note.id, note.title, note.content)
+                    } else {
+                        // Add new note
+                        db.addNote(note.title, note.content)
+                    }
                 }
+                val navController = parentFragment?.findNavController() ?: findNavController()
+                navController.navigate(R.id.action_note_edit_mode_to_home)
+                dismiss()
             }
 
-            requireParentFragment().findNavController().navigate(R.id.action_note_edit_mode_to_home)
-            dismiss()
         }
+    }
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+    override fun onDestroy() {
+        super.onDestroy()
+        try {
+            db.close()
+        } catch (ignored: Exception) { }
     }
 
 }

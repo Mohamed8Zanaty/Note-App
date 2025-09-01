@@ -8,7 +8,6 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
-import com.example.noteapp.databinding.FragmentHomeBinding
 import com.example.noteapp.databinding.FragmentNoteReadModeBinding
 
 class NoteReadModeFragment : Fragment() {
@@ -17,6 +16,7 @@ class NoteReadModeFragment : Fragment() {
     private lateinit var noteTitle : TextView
     private lateinit var noteText : TextView
     private val args: NoteReadModeFragmentArgs by navArgs()
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -24,7 +24,6 @@ class NoteReadModeFragment : Fragment() {
     ): View {
         _binding = FragmentNoteReadModeBinding.inflate(inflater, container, false)
         setupViews()
-
         return binding.root
     }
 
@@ -33,8 +32,8 @@ class NoteReadModeFragment : Fragment() {
         bindData(receivedData())
         editModeBtnSetup()
         backBtnSetup()
-
     }
+
     private fun setupViews() {
         noteTitle = binding.noteTitle
         noteText = binding.noteText
@@ -42,36 +41,49 @@ class NoteReadModeFragment : Fragment() {
 
     private fun editModeBtnSetup() {
         binding.btnEdit.setOnClickListener {
-                // Get the actual note ID from arguments
-                val noteId = args.noteId.toLongOrNull() ?: 0L
-                val note = Note(
-                    id = noteId,  // Include the ID here
-                    title = noteTitle.text.toString(),
-                    content = noteText.text.toString()
-                )
-                navigateToEditMode(note)
+            val noteId = args.noteId.toLongOrNull() ?: -1L
+            val note = Note(
+                id = noteId,
+                title = noteTitle.text.toString(),
+                content = noteText.text.toString()
+            )
+            navigateToEditMode(note)
         }
     }
 
-    private fun navigateToEditMode(note:Note) {
+    private fun navigateToEditMode(note: Note) {
         val action = NoteReadModeFragmentDirections
             .actionNoteReadModeToNoteEditMode(
-                noteId = note.id.toString(),  // Pass the actual ID
+                noteId = note.id.toString(),
                 noteTitle = note.title,
                 noteText = note.content
             )
         findNavController().navigate(action)
     }
-    private fun bindData(note : Pair<String?, String>) {
-        noteTitle.text = note.first
-        noteText.text = note.second
+
+    private fun bindData(note: Note) {
+        noteTitle.text = note.title
+        noteText.text = note.content
     }
-    private fun receivedData() : Pair<String?, String> {
-        return args.noteTitle to args.noteText
+
+    private fun receivedData(): Note {
+
+        val noteId = args.noteId.toLongOrNull() ?: -1L
+        return Note(
+            id = noteId,
+            title = args.noteTitle,
+            content = args.noteText
+        )
     }
+
     private fun backBtnSetup() {
         binding.btnBack.setOnClickListener {
-            findNavController().navigate(R.id.action_note_read_mode_to_home)
+            findNavController().popBackStack()
         }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

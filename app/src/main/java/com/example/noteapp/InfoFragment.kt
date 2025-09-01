@@ -1,11 +1,8 @@
 package com.example.noteapp
 
 import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
-import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.view.Gravity
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -42,7 +39,7 @@ class InfoFragment : DialogFragment() {
 
         val overlayView = view?.findViewById<View>(R.id.overlay_view)
         overlayView?.setOnClickListener {
-            dismiss() // Tap outside dismisses
+            dismiss()
         }
 
         val dialogLayout = view?.findViewById<LinearLayout>(R.id.dialog_layout)
