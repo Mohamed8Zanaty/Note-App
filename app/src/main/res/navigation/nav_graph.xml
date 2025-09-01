@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:startDestination="@id/homeFragment"
+
+    android:id="@+id/nav_graph">
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.example.noteapp.HomeFragment"
+        android:label="Home"
+        >
+        <action
+            android:id="@+id/action_home_to_note"
+            app:destination="@id/noteEditModeFragment"
+            />
+        <action
+            android:id="@+id/action_home_to_read_note"
+            app:destination="@id/noteReadModeFragment"
+            />
+
+    </fragment>
+    <fragment
+        android:id="@+id/noteReadModeFragment"
+        android:name="com.example.noteapp.NoteReadModeFragment"
+
+        >
+        <action
+            android:id="@+id/action_note_read_mode_to_home"
+            app:destination="@id/homeFragment"
+            />
+        <action
+            android:id="@+id/action_note_read_mode_to_note_edit_mode"
+            app:destination="@id/noteEditModeFragment"
+            >
+
+        </action>
+        <argument
+            android:name="noteId"
+            app:argType="string"
+            android:defaultValue="-1" />
+        <argument
+            android:name="noteTitle"
+            app:argType="string"
+            app:nullable="true"
+            />
+        <argument
+            android:name="noteText"
+            app:argType="string"
+            />
+    </fragment>
+    <fragment
+        android:id="@+id/noteEditModeFragment"
+        android:name="com.example.noteapp.NoteEditModeFragment"
+
+        >
+        <action
+            android:id="@+id/action_discard_keep_to_home"
+            app:destination="@id/homeFragment"
+            />
+        <action
+            android:id="@+id/action_note_edit_mode_to_home"
+            app:destination="@id/homeFragment"
+            />
+        <action
+            android:id="@+id/action_note_edit_mode_to_note_read_mode"
+            app:destination="@id/noteReadModeFragment">
+
+
+        </action>
+        <action
+            android:id="@+id/action_note_edit_mode_to_discard_keep"
+            app:destination="@id/discardKeepFragment">
+
+        </action>
+        <argument
+            android:name="noteId"
+            app:argType="string"
+            android:defaultValue="-1" />
+        <argument
+            android:name="noteTitle"
+            app:argType="string"
+            app:nullable="true"
+            />
+        <argument
+            android:name="noteText"
+            app:argType="string"
+            />
+
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/discardKeepFragment"
+        android:name="com.example.noteapp.DiscardKeepDialogFragment"
+
+        >
+
+    </fragment>
+</navigation>

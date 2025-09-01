@@ -7,4 +7,7 @@
     <!-- square icon buttons -->
     <dimen name="icon_btn_size">48dp</dimen>
     <dimen name="icon_size">24dp</dimen>
+    <dimen name="title_text_size">48sp</dimen>
+    <dimen name="note_text_size">23sp</dimen>
+
 </resources>

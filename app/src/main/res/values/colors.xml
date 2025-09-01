@@ -4,10 +4,14 @@
     <color name="white">#FFFFFFFF</color>
     <color name="on_button_text">#FFFFFFFF</color>
     <color name="button_bg">#3B3B3B</color>
+    <color name="info_text">#CFCFCF</color>
+    <color name="info_bg">#3B3B3B</color>
     <color name="fragment_bg">#252525</color>
     <color name="note_container">#FFF599</color>
     <color name="delete">#FF0000</color>
     <color name="discard">#FF0000</color>
     <color name="keep">#30BE71</color>
+    <color name="fab">#252525</color>
+    <color name="hint">#9A9A9A</color>
 
 </resources>

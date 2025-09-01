@@ -1,4 +1,17 @@
 <resources>
     <string name="app_name">Note App</string>
-    <string name="search_button">This Button is For Search</string>
+    <string name="info">Information Button</string>
+    <string name="note">Notes</string>
+    <string name="add_item">Add item</string>
+    <string name="empty_notes_list">Empty Notes List</string>
+    <string name="save_button">Save Button</string>
+    <string name="read_button">Read Button</string>
+    <string name="title">Title</string>
+    <string name="note_hint">Type something…</string>
+    <string name="file_not_found">File not found. Try searching again.</string>
+    <string name="designed_by">Designed by - Free design in Figma</string>
+    <string name="created_using">Created by using - Android(XML)</string>
+    <string name="made_by">Made by - Zanaty</string>
+    <string name="quote">\"Opportunities don\'t happen, you create them.\"</string>
+    <string name="discard_message">Are You Sure you want discard your changes ?</string>
 </resources>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- activated (selected) state -->
+    <item android:drawable="@drawable/note_delete_background" android:state_activated="true"/>
+    <!-- default -->
+    <item android:drawable="@drawable/rounded_text_view"/>
+</selector>

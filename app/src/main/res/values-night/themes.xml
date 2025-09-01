@@ -2,6 +2,10 @@
     <!-- Base application theme. -->
     <style name="Base.Theme.NoteApp" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your dark theme here. -->
+        <item name="android:colorBackground">@color/fragment_bg</item>
+        <item name="android:windowBackground">@color/fragment_bg</item>
+        <item name="imageButtonStyle">@style/Widget.MyApp.IconOnlyButton</item>
+        <item name="floatingActionButtonStyle">@style/Widget.MyApp.FAB</item>
         <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
     </style>
 </resources>

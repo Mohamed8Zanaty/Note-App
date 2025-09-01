@@ -7,6 +7,9 @@
         <item name="android:windowBackground">@color/fragment_bg</item>
 
         <item name="imageButtonStyle">@style/Widget.MyApp.IconOnlyButton</item>
+        <item name="floatingActionButtonStyle">@style/Widget.MyApp.FAB</item>
+
+
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
     </style>
 

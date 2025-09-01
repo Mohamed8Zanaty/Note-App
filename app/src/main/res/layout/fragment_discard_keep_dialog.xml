@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+
+    <View
+        android:id="@+id/overlay_view_discard"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#88000000" /> <!-- customize color/opacity -->
+
+
+    <LinearLayout
+        android:id="@+id/dialog_layout_discard"
+        android:layout_width="330dp"
+        android:layout_height="236dp"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="@drawable/rounded_bg"
+        android:clipToOutline="true"
+        android:clipChildren="true"
+        android:layout_gravity="center">
+
+        <ImageView
+            android:src="@drawable/info"
+            android:layout_marginBottom="20dp"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            app:tint="#606060">
+
+        </ImageView>
+
+        <TextView
+            android:textSize="23sp"
+            style="@style/InfoTextView"
+            android:textAlignment="center"
+            android:text="@string/discard_message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <LinearLayout
+            android:layout_marginStart="10dp"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/discard"
+            android:layout_margin="20dp"
+            android:background="@drawable/discard_btn"
+            android:layout_width="112dp"
+            android:text="Discard"
+            android:textSize="18sp"
+            app:backgroundTint="@null"
+            android:layout_height="wrap_content"
+            >
+
+        </com.google.android.material.button.MaterialButton>
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/keep"
+                android:layout_margin="20dp"
+                android:background="@drawable/keep_btn"
+                android:layout_width="112dp"
+                android:text="Keep"
+                android:textSize="18sp"
+                app:backgroundTint="@null"
+                android:layout_height="wrap_content"
+                >
+
+            </com.google.android.material.button.MaterialButton>
+
+        </LinearLayout>
+    </LinearLayout>
+
+</FrameLayout>
