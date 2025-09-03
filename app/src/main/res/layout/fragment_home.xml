@@ -3,9 +3,6 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <data>
-        <!-- No Variables Yet -->
-    </data>
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
@@ -26,6 +23,7 @@
                     android:layout_gravity="end"
                     android:orientation="horizontal">
                     <TextView
+                        android:fontFamily="@font/nunito_semibold"
                         android:id="@+id/app_title"
                         android:text="@string/note"
                         android:textSize="43sp"
@@ -70,6 +68,13 @@
             app:maxImageSize="48dp"
             android:layout_gravity="bottom|end"
             android:layout_margin="30dp"/>
+        <ImageView
+            android:id="@+id/emptyImage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/empty_list"
+            android:visibility="gone"
+            android:layout_gravity="center"/>
     </FrameLayout>
 
 </layout>

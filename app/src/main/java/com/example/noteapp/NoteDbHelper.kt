@@ -29,7 +29,7 @@ class NoteDbHelper private constructor(context: Context) :
         if (oldVersion < 2) {
             db.execSQL("ALTER TABLE $TABLE_NOTES ADD COLUMN $COL_CREATED_AT INTEGER NOT NULL DEFAULT 0")
         }
-        // future migrations: if (oldVersion < 3) { ... }
+
     }
 
     suspend fun addNote(title: String?, content: String): Long = withContext(Dispatchers.IO) {
@@ -60,7 +60,7 @@ class NoteDbHelper private constructor(context: Context) :
             TABLE_NOTES,
             arrayOf(COL_ID, COL_TITLE, COL_CONTENT, COL_CREATED_AT),
             null, null, null, null,
-            "$COL_CREATED_AT DESC"
+            null
         )
 
         cursor.use { c ->

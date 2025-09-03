@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <array name="note_colors">
+        <item>@color/note_0</item>
+        <item>@color/note_1</item>
+        <item>@color/note_2</item>
+        <item>@color/note_3</item>
+        <item>@color/note_4</item>
+    </array>
+</resources>

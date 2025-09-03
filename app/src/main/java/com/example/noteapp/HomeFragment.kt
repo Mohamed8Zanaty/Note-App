@@ -47,6 +47,7 @@ class HomeFragment : Fragment() {
         recyclerView = binding.notesRecycler
 
         adapter = NoteAdapter(
+            requireContext(),
             onItemClick = { note ->
                 val action = HomeFragmentDirections.actionHomeToReadNote(
                     noteId = note.id.toString(),
@@ -59,13 +60,22 @@ class HomeFragment : Fragment() {
                 viewLifecycleOwner.lifecycleScope.launch {
                     val deleted = withContext(Dispatchers.IO) { db.deleteNote(note.id) }
                     withContext(Dispatchers.Main) {
-                        if (deleted > 0) adapter.removeAt(pos)
+                        if (deleted > 0) {
+                            adapter.removeAt(pos)
+
+                        }
                         else Toast.makeText(requireContext(), "Failed to delete", Toast.LENGTH_SHORT).show()
                     }
                 }
+
             }
         )
-
+        adapter.registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {
+            override fun onChanged() = toggleEmpty()
+            override fun onItemRangeInserted(positionStart: Int, itemCount: Int) = toggleEmpty()
+            override fun onItemRangeRemoved(positionStart: Int, itemCount: Int) = toggleEmpty()
+        })
+        toggleEmpty()
         recyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
             this.adapter = this@HomeFragment.adapter
@@ -73,9 +83,15 @@ class HomeFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             val loaded = withContext(Dispatchers.IO) { db.getAllNotes() }
             adapter.updateList(loaded)
+
         }
 
 
+    }
+    private fun toggleEmpty() {
+        val empty = adapter.itemCount == 0
+        binding.emptyImage.visibility = if (empty) View.VISIBLE else View.GONE
+        binding.notesRecycler.visibility = if (empty) View.GONE else View.VISIBLE
     }
 
     private fun navigationToEditNote() {

@@ -10,7 +10,7 @@
         android:id="@+id/overlay_view_discard"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#88000000" /> <!-- customize color/opacity -->
+        android:background="#88000000" />
 
 
     <LinearLayout
@@ -34,6 +34,7 @@
         </ImageView>
 
         <TextView
+            android:fontFamily="@font/nunito_regular"
             android:textSize="23sp"
             style="@style/InfoTextView"
             android:textAlignment="center"
@@ -49,6 +50,7 @@
         <com.google.android.material.button.MaterialButton
             android:id="@+id/discard"
             android:layout_margin="20dp"
+            android:fontFamily="@font/nunito_regular"
             android:background="@drawable/discard_btn"
             android:layout_width="112dp"
             android:text="Discard"
@@ -59,6 +61,7 @@
 
         </com.google.android.material.button.MaterialButton>
             <com.google.android.material.button.MaterialButton
+                android:fontFamily="@font/nunito_regular"
                 android:id="@+id/keep"
                 android:layout_margin="20dp"
                 android:background="@drawable/keep_btn"

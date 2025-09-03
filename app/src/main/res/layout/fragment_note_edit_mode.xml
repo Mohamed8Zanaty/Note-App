@@ -80,6 +80,7 @@
 
             <EditText
                 android:id="@+id/note_title"
+                android:fontFamily="@font/nunito_semibold"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@null"
@@ -93,6 +94,7 @@
             <com.example.noteapp.CustomEditText
                 android:layout_marginTop="20dp"
                 android:id="@+id/note_text"
+                android:fontFamily="@font/nunito_regular"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@null"

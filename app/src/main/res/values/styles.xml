@@ -23,9 +23,7 @@
         <item name="android:layout_marginTop">10dp</item>
     </style>
     <style name="FullScreenDialog" parent="Theme.Material3.Light.Dialog">
-        <!-- Make the dialog fill the screen -->
         <item name="android:windowIsFloating">false</item>
-        <!-- Transparent so we can show our overlay color -->
         <item name="android:windowBackground">@color/info_bg</item>
     </style>
     <style name="NoteTextAppearance">
